@@ -56,12 +56,22 @@ from metrics import analyze_response_batch
 
 app = FastAPI(title="LLM Lab Backend")
 
-origins = os.getenv("CORS_ORIGINS", "*").split(",")
+env_origins = [
+    o.strip().rstrip("/")
+    for o in os.getenv("CORS_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+# Always include your deployed frontend (no trailing slash)
+allowed_origins = list(set(env_origins + [
+    "https://ai-quality-analyzer-frontend-production.up.railway.app"
+]))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins] + ["https://ai-quality-analyzer-frontend-production.up.railway.app/"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,            # <- exact origins only
+    allow_credentials=True,                  # set to False if you don't use cookies
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
