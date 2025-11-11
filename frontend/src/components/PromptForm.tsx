@@ -69,14 +69,17 @@ function DualRange({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const clientX = e.clientX;
-    // pick nearest thumb
+    // pick nearest thumb (use actual value scale, not normalized 0..1)
     const el = wrapRef.current;
     if (!el) return;
     const { left: L, width } = el.getBoundingClientRect();
     const rel = (clientX - L) / width;
-    const candidate = Math.min(Math.max(rel, 0), 1);
-    const dLeft = Math.abs(candidate - left);
-    const dRight = Math.abs(candidate - right);
+    const candidateValue = Math.min(
+      Math.max(rel * (max - min) + min, min),
+      max
+    );
+    const dLeft = Math.abs(candidateValue - left);
+    const dRight = Math.abs(candidateValue - right);
     activeRef.current = dLeft <= dRight ? "left" : "right";
     setActive(activeRef.current);
     // capture pointer so we continue getting move/up
@@ -465,21 +468,32 @@ export default function PromptForm({
         Quick presets to experiment with different creativity levels
       </div>
 
-      <div className="h2 space">
-        Temperature Range
-        <span className="hint" title="Randomness of the model's output">
-          i
-        </span>
+      {/* Ranges: show temperature and top-p side-by-side */}
+      <div className="ranges-row">
+        <div className="range-col">
+          <div className="h2 space">
+            Temperature Range
+            <span className="hint" title="Randomness of the model's output">
+              i
+            </span>
+          </div>
+          <DualRange
+            value={tempRange}
+            onChange={setTempRange}
+            min={0}
+            max={2}
+          />
+        </div>
+        <div className="range-col">
+          <div className="h2 space">
+            Top P Range{" "}
+            <span className="hint" title="Randomness of text generated">
+              i
+            </span>
+          </div>
+          <DualRange value={toppRange} onChange={setToppRange} />
+        </div>
       </div>
-      <DualRange value={tempRange} onChange={setTempRange} min={0} max={2} />
-
-      <div className="h2 space">
-        Top P Range{" "}
-        <span className="hint" title="Randomness of text generated">
-          i
-        </span>
-      </div>
-      <DualRange value={toppRange} onChange={setToppRange} />
 
       <div className="grid-2">
         <div>
