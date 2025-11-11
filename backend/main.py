@@ -61,7 +61,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in origins],
     allow_credentials=True,
-    allow_origins=["https://ai-quality-analyzer-frontend-production.up.railway.app/"]
+    allow_origins=["https://ai-quality-analyzer-frontend-production.up.railway.app/"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
