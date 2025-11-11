@@ -8,6 +8,6 @@ textstat==0.7.4
 nltk==3.9.1
 google-genai==0.3.0
 openai==1.51.2
-
+grok==1.0
 pymysql==1.1.1
 pymongo==4.8.0
