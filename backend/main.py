@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
@@ -95,9 +96,16 @@ def create_exp(req: CreateExperimentRequest):
         else:
             print("Using Mock provider")
             raw = _mock_generate(req.prompt, params)
-    except Exception:
-        # raw = _mock_generate(req.prompt, params)
-        raise HTTPException(status_code=500, detail="Failed to generate responses from provider")
+    except Exception as e:
+        # If provider returned a quota error, return 429 with a clear payload so frontend can show a popup.
+        msg = str(e).lower()
+        logging.exception("Failed to generate responses from provider: %s", e)
+        if "insufficient_quota" in msg or "quota" in msg or "exceed" in msg:
+            # experiment was already created above (exp_id)
+            raise HTTPException(status_code=429, detail={"message": "quota_exceeded", "reason": str(e), "experiment_id": exp_id})
+        # include the original error message in the HTTP response for debugging (avoid leaking secrets in production)
+        raise HTTPException(status_code=500, detail=f"Provider error: {str(e)}")
+    
     print("Raw responses generated:", raw)
     enriched = analyze_response_batch(req.prompt, raw)
     st_add_responses(exp_id, enriched)

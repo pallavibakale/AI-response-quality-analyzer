@@ -558,3 +558,66 @@ details summary::marker {
   border-color: transparent;
   box-shadow: 0 10px 30px rgba(37, 99, 235, 0.14);
 }
+
+/* Combinations UI styling */
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Example / explanation block (used in PromptForm) */
+.example-block {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--text);
+}
+
+.example-block .example-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.example-block pre,
+.example-block code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+/* small improvements for descriptive text inside .muted */
+.muted p {
+  margin: 6px 0;
+}
+
+/* Dark theme adjustments for the example block */
+[data-theme="dark"] .example-block {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+/* ensure chips inside button-row keep spacing and visual focus behavior */
+.button-row .chip {
+  margin: 0;
+}
+
+/* hide truncation ellipsis when a details element is open */
+details[open] summary .trunc-ellipsis {
+  display: none;
+}
+
+/* ensure ellipsis behaves as a simple inline marker */
+.trunc-ellipsis {
+  display: inline;
+  margin-left: 2px;
+}

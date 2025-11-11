@@ -2,19 +2,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchExperiment, downloadExport } from "../lib/api";
 import type { ExperimentData, ResponseRecord } from "../lib/types";
+import React from "react";
 
 function ResponseText({ text }: { text: string }) {
   const cleaned = text.replace(/^sdk_http_response=[\s\S]*$/gi, "").trim(); // guard if old data exists
   if (!cleaned) return <span className="muted">(no text returned)</span>;
   const short = cleaned.slice(0, 400);
   const truncated = cleaned.length > 400;
+
+  // track details open state so summary can show full sentence when expanded
+  const [open, setOpen] = React.useState(false);
+
   if (!truncated)
     return <div style={{ whiteSpace: "pre-wrap" }}>{cleaned}</div>;
   return (
-    <details>
+    <details onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
       <summary style={{ cursor: "pointer", userSelect: "none" }}>
-        <span style={{ whiteSpace: "pre-wrap" }}>{short}…</span>
-        <em className="muted"> (show more)</em>
+        <span style={{ whiteSpace: "pre-wrap" }}>
+          {open ? cleaned : short}
+          {!open && <span className="trunc-ellipsis">…</span>}
+        </span>
       </summary>
       <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>{cleaned}</div>
     </details>
@@ -117,6 +124,27 @@ export default function ResponsesTable({
 
   const rows: ResponseRecord[] = data.responses ?? [];
   const exp = data.experiment;
+
+  // If there are no responses, show an explicit message (quota-exhausted UX)
+  if (rows.length === 0) {
+    return (
+      <>
+        <div className="h2">Responses</div>
+        <div className="muted">
+          Experiment name: {exp?.title ? `${exp.title} • ` : ""}Model:{" "}
+          <b>{exp?.model}</b>
+        </div>
+        <div style={{ marginTop: 20, padding: 20 }}>
+          <div className="muted">
+            Sorry — your quota appears to be exhausted.
+          </div>
+          <div className="muted" style={{ marginTop: 8 }}>
+            No responses were produced for this experiment.
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
