@@ -59,9 +59,8 @@ app = FastAPI(title="LLM Lab Backend")
 origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins],
+    allow_origins=[o.strip() for o in origins] + ["https://ai-quality-analyzer-frontend-production.up.railway.app/"],
     allow_credentials=True,
-    allow_origins=["https://ai-quality-analyzer-frontend-production.up.railway.app/"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
