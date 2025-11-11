@@ -29,78 +29,30 @@ function ResponseText({ text }: { text: string }) {
 }
 
 function ParamSet({ data }: { data: any }) {
-  if (data == null) return <span className="muted">(no parameters)</span>;
-
-  const renderValue = (v: any, level = 0) => {
-    if (v == null) return <span className="muted">null</span>;
-    if (typeof v === "string") return <span>{v}</span>;
-    if (typeof v === "number" || typeof v === "boolean")
-      return <span>{String(v)}</span>;
-    if (Array.isArray(v)) {
-      if (v.length === 0) return <span>[]</span>;
-      return (
-        <div>
-          <details className="param-details">
-            <summary className="param-summary">Array[{v.length}]</summary>
-            <div className="param-nested">
-              {v.map((item, i) => (
-                <div key={i} className="param-row">
-                  <strong className="param-key index">{i}.</strong>
-                  <span className="param-value">
-                    {renderValue(item, level + 1)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </details>
-        </div>
-      );
-    }
-    // object
-    const entries = Object.entries(v as Record<string, any>);
-    if (entries.length === 0) return <span>{{}.toString()}</span>;
-    return (
-      <div>
-        <details className="param-details">
-          <summary className="param-summary">Object</summary>
-          <div className="param-nested">
-            {entries.map(([k, val]) => (
-              <div key={k} className="param-row">
-                <strong className="param-key">{k}:</strong>
-                <span className="param-value">
-                  {typeof val === "object" && val !== null
-                    ? renderValue(val, level + 1)
-                    : String(val)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </details>
-      </div>
-    );
-  };
-
-  // If the top-level data is a simple object, render its key/value list directly
-  if (typeof data === "object" && !Array.isArray(data)) {
-    const entries = Object.entries(data as Record<string, any>);
-    if (entries.length === 0)
-      return <span className="muted">(no parameters)</span>;
-    return (
-      <div>
-        {entries.map(([k, v]) => (
-          <div key={k} className="param-row">
-            <strong className="param-key">{k}:</strong>
-            <span className="param-value">
-              {typeof v === "object" && v !== null ? renderValue(v) : String(v)}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
+  // Only show temperature and top_p values (ignore other keys)
+  if (data == null || typeof data !== "object") {
+    return <span className="muted">(no parameters)</span>;
   }
 
-  // fallback (primitive)
-  return <span>{String(data)}</span>;
+  const allowed = ["temperature", "top_p"];
+  const present = allowed.filter((k) =>
+    Object.prototype.hasOwnProperty.call(data, k)
+  );
+  if (present.length === 0)
+    return <span className="muted">(no parameters)</span>;
+
+  return (
+    <div>
+      {present.map((k) => (
+        <div key={k} className="param-row">
+          <strong className="param-key">{k}:</strong>
+          <span className="param-value">
+            {String((data as Record<string, any>)[k])}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function ResponsesTable({

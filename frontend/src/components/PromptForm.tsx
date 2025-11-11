@@ -199,12 +199,16 @@ export default function PromptForm({
 }: {
   onCreated: (id: string) => void;
 }) {
-  const [title, setTitle] = useState<string>("LLM Title");
+  const [title, setTitle] = useState<string>("");
   const [prompt, setPrompt] = useState<string>("");
   const [chars, setChars] = useState<number>(0);
   const limit = 2000;
 
   const [provider, setProvider] = useState<Provider>("gemini");
+  // Use an uncontrolled input so the key is not persisted in React state
+  const apiKeyRef = React.useRef<HTMLInputElement | null>(null);
+  const [apiKeyStatus, setApiKeyStatus] = useState<string | null>(null);
+
   const defaultModelFor = (prov: Provider): string => {
     switch (prov) {
       case "gemini":
@@ -345,6 +349,28 @@ export default function PromptForm({
     setModel(defaultModelFor(p));
   };
 
+  async function saveApiKey() {
+    try {
+      const raw = apiKeyRef.current?.value?.trim();
+      if (!raw) return;
+      setApiKeyStatus("saving");
+      const res = await fetch("/apikey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ provider, apiKey: raw }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      // clear the input value (removes key from DOM/JS accessible input)
+      if (apiKeyRef.current) apiKeyRef.current.value = "";
+      setApiKeyStatus("saved");
+      setTimeout(() => setApiKeyStatus(null), 1500);
+    } catch (err: any) {
+      setApiKeyStatus("error");
+      console.error("saving api key failed", err);
+    }
+  }
+
   return (
     <div>
       {alertData && (
@@ -422,6 +448,7 @@ export default function PromptForm({
             className="input"
             placeholder="Enter a title for your experiment"
             value={title}
+            name="title"
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setTitle(e.target.value)
             }
@@ -468,10 +495,9 @@ export default function PromptForm({
         Quick presets to experiment with different creativity levels
       </div>
 
-      {/* Ranges: show temperature and top-p side-by-side */}
       <div className="ranges-row">
         <div className="range-col">
-          <div className="h2 space">
+          <div className="h2 no-space">
             Temperature Range
             <span className="hint" title="Randomness of the model's output">
               i
@@ -485,7 +511,7 @@ export default function PromptForm({
           />
         </div>
         <div className="range-col">
-          <div className="h2 space">
+          <div className="h2 no-space">
             Top P Range{" "}
             <span className="hint" title="Randomness of text generated">
               i
@@ -495,9 +521,9 @@ export default function PromptForm({
         </div>
       </div>
 
-      <div className="grid-2">
+      <div className="grid-3">
         <div>
-          <label>Provider</label>
+          <div className="h2">Provider</div>
           <select
             className="input"
             value={provider}
@@ -510,7 +536,7 @@ export default function PromptForm({
           </select>
         </div>
         <div>
-          <label>Model (selected by provider)</label>
+          <div className="h2">Model (selected by provider)</div>
           <select
             className="input"
             value={model}
@@ -524,10 +550,39 @@ export default function PromptForm({
             </option>
           </select>
         </div>
+        <div>
+          <div className="h2">Provider API Key (optional — backend only)</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              ref={apiKeyRef}
+              className="input"
+              type="password"
+              placeholder="Paste provider API key"
+              style={{ maxWidth: 420 }}
+              aria-label="Provider API key"
+            />
+            <button
+              className="btn"
+              onClick={saveApiKey}
+              disabled={
+                !apiKeyRef.current?.value.trim() || apiKeyStatus === "saving"
+              }
+            >
+              {apiKeyStatus === "saving" ? "Saving…" : "Save key"}
+            </button>
+            {apiKeyStatus === "saved" && (
+              <span style={{ color: "green" }}>Saved</span>
+            )}
+          </div>
+          <div className="muted">
+            Keys are sent to the backend over HTTPS; they are not stored in
+            localStorage.
+          </div>
+        </div>
       </div>
 
       <div className="row">
-        <label>Combinations to Generate</label>
+        <div className="h2">Combinations to Generate</div>
         <div
           role="group"
           aria-label="Combinations to generate"
@@ -569,7 +624,7 @@ export default function PromptForm({
         </div>
       </div>
 
-      <div className="row">
+      <div className="row" style={{ placeSelf: "center" }}>
         <button
           className="btn primary"
           disabled={
@@ -577,7 +632,7 @@ export default function PromptForm({
           }
           onClick={() =>
             mutation.mutate({
-              title: title ? title : "LLM Title",
+              title: title,
               prompt,
               provider,
               model: model || undefined,

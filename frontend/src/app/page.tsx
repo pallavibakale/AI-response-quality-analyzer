@@ -62,6 +62,15 @@ function Shell() {
         />
 
         <section className="main card">
+          <div
+            className="muted small"
+            style={{ marginBottom: 12, fontSize: 13, lineHeight: "1.2" }}
+          >
+            Enter a prompt, set temperature and top-p ranges; the app generates
+            and compares outputs across combinations — export your best results
+            for deeper analysis.
+          </div>
+
           <PromptForm onCreated={setActiveId} />
           {activeId ? (
             <ResponsesTable experimentId={activeId} />

@@ -12,6 +12,15 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import logging
 
+# Simple in-memory key store for demo only — DO NOT use this in production.
+API_KEYS: Dict[str, str] = {}
+# map provider -> env var expected by provider clients
+ENV_VAR_BY_PROVIDER = {
+    "openai": "OPENAI_API_KEY",
+    "gemini": "GOOGLE_API_KEY",
+    "groq": "GROQ_API_KEY",
+}
+
 load_dotenv()
 
 # storage abstraction (SQL or Mongo depending on DB_KIND)
@@ -60,6 +69,23 @@ app.add_middleware(
 def startup():
     init_storage()
 
+@app.post("/apikey")
+def set_apikey(payload: Dict[str, Any]):
+    """
+    Demo endpoint: accept {"provider": "openai", "apiKey": "sk-..."} and store in memory.
+    In production: replace with a secure vault (Key Vault / Vault) and restrict access.
+    """
+    provider = (payload.get("provider") or "openai").lower().strip()
+    key = payload.get("apiKey") or payload.get("api_key")
+    if not key or not isinstance(key, str):
+        raise HTTPException(status_code=400, detail="missing apiKey")
+    API_KEYS[provider] = key
+    env_var = ENV_VAR_BY_PROVIDER.get(provider)
+    if env_var:
+        # set env var so provider client libraries can pick it up (demo only)
+        os.environ[env_var] = key
+    return {"ok": True, "provider": provider}
+
 class ParamSet(BaseModel):
     temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0)
     top_p: Optional[float] = Field(1.0, ge=0.0, le=1.0)
@@ -83,6 +109,12 @@ def create_exp(req: CreateExperimentRequest):
     provider = (req.provider or "gemini").lower().strip()
     # req.model may be None; avoid calling .lower() on None
     model = (req.model or "").lower().strip() or ("gemini-2.5-flash" if provider == "gemini" else "gpt-4o-mini")
+    # Ensure provider env var is populated from in-memory store if available (demo).
+    key = API_KEYS.get(provider)
+    if key:
+        env_var = ENV_VAR_BY_PROVIDER.get(provider)
+        if env_var:
+            os.environ[env_var] = key
     exp_id = st_create_experiment(req.title, req.prompt, model)
 
     params = [p.dict() for p in req.param_sets]
@@ -94,19 +126,14 @@ def create_exp(req: CreateExperimentRequest):
         elif provider == "groq":  
             raw = _groq_generate(req.prompt, params, model=model)
         else:
-            print("Using Mock provider")
             raw = _mock_generate(req.prompt, params)
     except Exception as e:
         # If provider returned a quota error, return 429 with a clear payload so frontend can show a popup.
         msg = str(e).lower()
         logging.exception("Failed to generate responses from provider: %s", e)
         if "insufficient_quota" in msg or "quota" in msg or "exceed" in msg:
-            # experiment was already created above (exp_id)
             raise HTTPException(status_code=429, detail={"message": "quota_exceeded", "reason": str(e), "experiment_id": exp_id})
-        # include the original error message in the HTTP response for debugging (avoid leaking secrets in production)
         raise HTTPException(status_code=500, detail=f"Provider error: {str(e)}")
-    
-    print("Raw responses generated:", raw)
     enriched = analyze_response_batch(req.prompt, raw)
     st_add_responses(exp_id, enriched)
     print(f"Experiment {exp_id} created with {len(enriched)} responses.")

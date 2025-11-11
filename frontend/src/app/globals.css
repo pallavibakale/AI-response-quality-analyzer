@@ -213,16 +213,19 @@ label {
   color: var(--text);
 }
 .space {
-  margin-top: 12px;
+  margin-top: 14px;
+}
+.no-space {
+  margin: 0;
 }
 .count {
   color: var(--muted);
   font-size: 12px;
 }
 
-.grid-2 {
+.grid-3 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 2fr;
   gap: 12px;
 }
 .row {
