@@ -4,7 +4,7 @@ import { fetchExperiment, downloadExport } from "../lib/api";
 import type { ExperimentData, ResponseRecord } from "../lib/types";
 
 function ResponseText({ text }: { text: string }) {
-  const cleaned = text.replace(/^sdk_http_response=.*$/gis, "").trim(); // guard if old data exists
+  const cleaned = text.replace(/^sdk_http_response=[\s\S]*$/gi, "").trim(); // guard if old data exists
   if (!cleaned) return <span className="muted">(no text returned)</span>;
   const short = cleaned.slice(0, 400);
   const truncated = cleaned.length > 400;
