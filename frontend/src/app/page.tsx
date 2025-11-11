@@ -9,7 +9,7 @@ import ExperimentHistory from "../components/ExperimentHistory";
 
 const qc = new QueryClient();
 
-function Header({ onExport }: { onExport: () => void }) {
+function Header() {
   return (
     <header className="hdr">
       <div className="brand">
@@ -21,9 +21,6 @@ function Header({ onExport }: { onExport: () => void }) {
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <ThemeToggle />
-        <button className="btn ghost" onClick={onExport}>
-          Export
-        </button>
       </div>
     </header>
   );
@@ -32,27 +29,10 @@ function Header({ onExport }: { onExport: () => void }) {
 function Shell() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  // ExperimentHistory handles fetching and filtering; q and setQ are passed down
-
-  const exportActive = () => {
-    if (!activeId) return;
-    window.open(
-      `${
-        process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"
-      }/experiments/${activeId}/export/json`,
-      "_blank"
-    );
-    window.open(
-      `${
-        process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"
-      }/experiments/${activeId}/export/csv`,
-      "_blank"
-    );
-  };
 
   return (
     <div className="wrap">
-      <Header onExport={exportActive} />
+      <Header />
       <main className="grid">
         <ExperimentHistory
           activeId={activeId}
