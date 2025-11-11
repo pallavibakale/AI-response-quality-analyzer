@@ -126,11 +126,27 @@ export default function ResponsesTable({
             <tr>
               <th style={{ width: 240 }}>Parameter set</th>
               <th>Text</th>
-              <th>Aggregate</th>
-              <th>Lexical</th>
-              <th>Repetition</th>
-              <th>Readability</th>
-              <th>Clarity</th>
+              <th title="Weighted composite of the metrics giving a single overall quality score.">
+                Aggregate
+              </th>
+              <th title="Unique-word ratio — higher means more varied vocabulary.">
+                Lexical
+              </th>
+              <th title="Fraction of repeated n‑grams — lower is better (less repetition).">
+                Repetition
+              </th>
+              <th title="Normalized Flesch Reading Ease — higher values indicate easier reading.">
+                Readability
+              </th>
+              <th title="Sentence-length balance (ideal ~12–24 words) — measures clarity.">
+                Clarity
+              </th>
+              <th title="Signals like paragraphs, lists, or labeled sections that indicate clear structure.">
+                Structure
+              </th>
+              <th title="Proportion of important prompt words that appear in the response.">
+                Keyword coverage
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -149,6 +165,8 @@ export default function ResponsesTable({
                 <td>{formatMetric(r.metrics.repetition)}</td>
                 <td>{formatMetric(r.metrics.readability)}</td>
                 <td>{formatMetric(r.metrics.clarity_score)}</td>
+                <td>{formatMetric(r.metrics.structure)}</td>
+                <td>{formatMetric(r.metrics.keyword_coverage)}</td>
               </tr>
             ))}
           </tbody>
